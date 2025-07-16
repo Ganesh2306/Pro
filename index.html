@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Ping Pong</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #0f0f1a;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            color: white;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: radial-gradient(circle at center, #1a1a2e, #0f0f1a);
+            border: 4px solid #4a4a7a;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(100, 100, 255, 0.3);
+            overflow: hidden;
+        }
+        
+        #paddle-left, #paddle-right {
+            position: absolute;
+            width: 15px;
+            height: 100px;
+            background: linear-gradient(to bottom, #00ff22f3, #d0ff00f3);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+        
+        #paddle-left {
+            left: 30px;
+            top: 200px;
+        }
+        
+        #paddle-right {
+            right: 30px;
+            top: 200px;
+            background: linear-gradient(to bottom, #ffee00, #ff0088da);
+            box-shadow: 0 0 15px rgba(0, 4, 255, 0.7);
+        }
+        
+        #ball {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #ffcc00ef);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            top: 250px;
+            left: 400px;
+        }
+        
+        #score {
+            position: absolute;
+            top: 30px;
+            width: 100%;
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            letter-spacing: 5px;
+        }
+        
+        #center-line {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                transparent 100%);
+            left: 50%;
+            top: 0;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            color: #aaa;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: white;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        #countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        #restart-btn {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            background: linear-gradient(to right, #ff00ff, #00ffff);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s, transform 0.3s;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+        #restart-btn:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="paddle-left"></div>
+        <div id="paddle-right"></div>
+        <div id="ball"></div>
+        <div id="center-line"></div>
+        <div id="score">0 - 0</div>
+        <div id="instructions">
+            Player 1: W (up) and S (down) | Player 2: Arrow Up and Arrow Down
+        </div>
+        <div id="countdown">3</div>
+        <div id="game-over">GAME OVER</div>
+        <button id="restart-btn">PLAY AGAIN</button>
+    </div>
+
+    <audio id="paddleHit" src="https://textronicsbucket.s3.ap-south-1.amazonaws.com/audio_file/plastic-bat-hits-ball-kids-playing-cricket-sound-effect-359990.mp3" preload="auto"></audio>
+    <audio id="wallHit" src="https://textronicsbucket.s3.ap-south-1.amazonaws.com/audio_file/plastic-bat-hits-ball-kids-playing-cricket-sound-effect-359990.mp3" preload="auto"></audio>
+    <audio id="scoreSound" src="https://textronicsbucket.s3.ap-south-1.amazonaws.com/audio_file/plastic-bat-hits-ball-kids-playing-cricket-sound-effect-359990.mp3" preload="auto"></audio>
+    <audio id="gameOverSound" src="https://textronicsbucket.s3.ap-south-1.amazonaws.com/audio_file/plastic-bat-hits-ball-kids-playing-cricket-sound-effect-359990.mp3" preload="auto"></audio>
+
+    <script>
+        // Game elements
+        const gameContainer = document.getElementById('game-container');
+        const paddleLeft = document.getElementById('paddle-left');
+        const paddleRight = document.getElementById('paddle-right');
+        const ball = document.getElementById('ball');
+        const scoreDisplay = document.getElementById('score');
+        const countdown = document.getElementById('countdown');
+        const gameOverDisplay = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Sound effects
+        const paddleHitSound = document.getElementById('paddleHit');
+        const wallHitSound = document.getElementById('wallHit');
+        const scoreSound = document.getElementById('scoreSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+        
+        // Game variables
+        let leftScore = 0;
+        let rightScore = 0;
+        let ballX = 400;
+        let ballY = 250;
+        let ballSpeedX = 0;
+        let ballSpeedY = 0;
+        let paddleLeftY = 200;
+        let paddleRightY = 200;
+        const paddleHeight = 100;
+        const paddleWidth = 15;
+        const ballSize = 18;
+        const gameWidth = 800;
+        const gameHeight = 500;
+        let gameActive = false;
+        let winningScore = 5;
+        let particles = [];
+        
+        // Key states
+        const keys = {
+            w: false,
+            s: false,
+            ArrowUp: false,
+            ArrowDown: false
+        };
+        
+        // Event listeners for key presses
+        document.addEventListener('keydown', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = false;
+            }
+        });
+        
+        // Restart button
+        restartBtn.addEventListener('click', startGame);
+        
+        // Start the game
+        startGame();
+        
+        function startGame() {
+            leftScore = 0;
+            rightScore = 0;
+            gameActive = true;
+            scoreDisplay.textContent = "0 - 0";
+            gameOverDisplay.style.opacity = "0";
+            restartBtn.style.opacity = "0";
+            restartBtn.style.pointerEvents = "none";
+            
+            // Countdown before starting
+            countdown.style.opacity = "1";
+            let count = 3;
+            countdown.textContent = count;
+            
+            const countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdown.textContent = count;
+                } else {
+                    countdown.textContent = "GO!";
+                    setTimeout(() => {
+                        countdown.style.opacity = "0";
+                        clearInterval(countdownInterval);
+                        resetBall();
+                        gameLoop();
+                    }, 500);
+                }
+            }, 1000);
+        }
+        
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.backgroundColor = color;
+                gameContainer.appendChild(particle);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 3;
+                const lifetime = 500 + Math.random() * 1000;
+                
+                particles.push({
+                    element: particle,
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    lifetime: lifetime,
+                    age: 0
+                });
+            }
+        }
+        
+        function updateParticles(deltaTime) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.age += deltaTime;
+                
+                if (p.age >= p.lifetime) {
+                    gameContainer.removeChild(p.element);
+                    particles.splice(i, 1);
+                    continue;
+                }
+                
+                p.x += p.vx;
+                p.y += p.vy;
+                p.element.style.left = p.x + 'px';
+                p.element.style.top = p.y + 'px';
+                
+                // Fade out
+                const opacity = 1 - (p.age / p.lifetime);
+                p.element.style.opacity = opacity;
+            }
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!gameActive) return;
+            
+            // Move paddles with smooth movement
+            if (keys.w && paddleLeftY > 0) {
+                paddleLeftY -= 7;
+            }
+            if (keys.s && paddleLeftY < gameHeight - paddleHeight) {
+                paddleLeftY += 7;
+            }
+            if (keys.ArrowUp && paddleRightY > 0) {
+                paddleRightY -= 7;
+            }
+            if (keys.ArrowDown && paddleRightY < gameHeight - paddleHeight) {
+                paddleRightY += 7;
+            }
+            
+            // Update paddle positions with smooth transition
+            paddleLeft.style.top = paddleLeftY + 'px';
+            paddleRight.style.top = paddleRightY + 'px';
+            
+            // Move ball
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+            
+            // Ball collision with top and bottom
+            if (ballY <= 0 || ballY >= gameHeight - ballSize) {
+                ballSpeedY = -ballSpeedY;
+                wallHitSound.currentTime = 0;
+                wallHitSound.play();
+                createParticles(
+                    ballX + ballSize/2, 
+                    ballY + ballSize/2, 
+                    '#ffffff', 
+                    10
+                );
+            }
+            
+            // Ball collision with paddles
+            // Left paddle
+            if (
+                ballX <= 30 + paddleWidth &&
+                ballX >= 30 &&
+                ballY + ballSize >= paddleLeftY &&
+                ballY <= paddleLeftY + paddleHeight
+            ) {
+                ballSpeedX = Math.abs(ballSpeedX) * 1.05; // Ensure positive and increase speed
+                // Add some angle based on where the ball hits the paddle
+                const hitPosition = (ballY - paddleLeftY) / paddleHeight;
+                ballSpeedY = (hitPosition - 0.5) * 10;
+                
+                paddleHitSound.currentTime = 0;
+                paddleHitSound.play();
+                createParticles(
+                    30 + paddleWidth, 
+                    ballY + ballSize/2, 
+                    '#00ffff', 
+                    15
+                );
+            }
+            
+            // Right paddle
+            if (
+                ballX + ballSize >= gameWidth - 30 - paddleWidth &&
+                ballX + ballSize <= gameWidth - 30 &&
+                ballY + ballSize >= paddleRightY &&
+                ballY <= paddleRightY + paddleHeight
+            ) {
+                ballSpeedX = -Math.abs(ballSpeedX) * 1.05; // Ensure negative and increase speed
+                // Add some angle based on where the ball hits the paddle
+                const hitPosition = (ballY - paddleRightY) / paddleHeight;
+                ballSpeedY = (hitPosition - 0.5) * 10;
+                
+                paddleHitSound.currentTime = 0;
+                paddleHitSound.play();
+                createParticles(
+                    gameWidth - 30 - paddleWidth, 
+                    ballY + ballSize/2, 
+                    '#ff00ff', 
+                    15
+                );
+            }
+            
+            // Ball out of bounds (score)
+            if (ballX < 0) {
+                rightScore++;
+                scoreSound.currentTime = 0;
+                scoreSound.play();
+                checkGameOver();
+                resetBall();
+            }
+            if (ballX > gameWidth) {
+                leftScore++;
+                scoreSound.currentTime = 0;
+                scoreSound.play();
+                checkGameOver();
+                resetBall();
+            }
+            
+            // Update ball position
+            ball.style.left = ballX + 'px';
+            ball.style.top = ballY + 'px';
+            
+            // Update score
+            scoreDisplay.textContent = `${leftScore} - ${rightScore}`;
+            
+            // Update particles
+            updateParticles(16); // Assuming ~60fps
+            
+            // Continue the game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function checkGameOver() {
+            if (leftScore >= winningScore || rightScore >= winningScore) {
+                gameActive = false;
+                gameOverDisplay.textContent = 
+                    leftScore >= winningScore ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+                gameOverDisplay.style.opacity = "1";
+                restartBtn.style.opacity = "1";
+                restartBtn.style.pointerEvents = "auto";
+                gameOverSound.currentTime = 0;
+                gameOverSound.play();
+            }
+        }
+        
+        // Reset ball to center
+        function resetBall() {
+            ballX = gameWidth / 2 - ballSize / 2;
+            ballY = gameHeight / 2 - ballSize / 2;
+            
+            // Only set speed if game is active (not during countdown)
+            if (gameActive) {
+                ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * 4;
+                ballSpeedY = (Math.random() * 2 - 1) * 3;
+            } else {
+                ballSpeedX = 0;
+                ballSpeedY = 0;
+            }
+            
+            // Create explosion effect
+            createParticles(
+                gameWidth / 2, 
+                gameHeight / 2, 
+                '#ffffff', 
+                20
+            );
+        }
+    </script>
+</body>
+</html>
