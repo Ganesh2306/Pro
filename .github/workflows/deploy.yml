@@ -12,7 +12,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
+    
+    - name: Ping EC2 (test)
+      run: ping -c 4 ${{ secrets.EC2_HOST }}
+ 
     - name: Setup SSH Agent
       uses: webfactory/ssh-agent@v0.5.4
       with:
