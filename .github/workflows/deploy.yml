@@ -3,7 +3,7 @@ name: Deploy HTML to EC2
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main  # or master, if that's your default branch
 
 jobs:
   deploy:
@@ -12,10 +12,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    
-    - name: Ping EC2 (test)
-      run: ping -c 4 ${{ secrets.EC2_HOST }}
- 
+
     - name: Setup SSH Agent
       uses: webfactory/ssh-agent@v0.5.4
       with:
@@ -23,5 +20,5 @@ jobs:
 
     - name: Copy files to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p /var/www/html/pro/"
-        scp -o StrictHostKeyChecking=no index.html ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/pro/
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p /var/www/html/Pro/index.html"
+        scp -o StrictHostKeyChecking=no index.html ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/Pro/index.html
